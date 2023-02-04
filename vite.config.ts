@@ -140,6 +140,7 @@ export default defineConfig(({ command }) => {
         nodeIntegration: true,
       }),
     ],
+    clearScreen: false,
     server: {
       port: 3344,
       host: true, // host设置为true才可以使用network的形式，以ip访问项目
