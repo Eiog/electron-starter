@@ -1,48 +1,50 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
-import vue from '@vitejs/plugin-vue';
-import Unocss from 'unocss/vite';
-import VueSetupExtend from 'vite-plugin-vue-setup-extend';
-import Components from 'unplugin-vue-components/vite';
-import { NaiveUiResolver } from 'unplugin-vue-components/resolvers';
-import AutoImport from 'unplugin-auto-import/vite';
-import Icons from 'unplugin-icons/vite';
-import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
-import compressPlugin from 'vite-plugin-compression';
-import { rmSync } from 'node:fs';
-import electron from 'vite-plugin-electron';
-import renderer from 'vite-plugin-electron-renderer';
-import pkg from './package.json';
+import { resolve } from 'path'
+import { rmSync } from 'node:fs'
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import Unocss from 'unocss/vite'
+import Components from 'unplugin-vue-components/vite'
+import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
+import AutoImport from 'unplugin-auto-import/vite'
+import Icons from 'unplugin-icons/vite'
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
+import { VitePWA } from 'vite-plugin-pwa'
+import Markdown from 'vite-plugin-vue-markdown'
+import LinkAttributes from 'markdown-it-link-attributes'
+import Shiki from 'markdown-it-shiki'
+import electron from 'vite-plugin-electron'
+import renderer from 'vite-plugin-electron-renderer'
+import pkg from './package.json'
 // https://vitejs.dev/config/
 const vendorLibs: { match: string[]; output: string }[] = [
   {
     match: ['naive-ui'],
     output: 'naive-ui',
   },
-];
-//分包
+]
+// 分包
 const configManualChunk = (id: string) => {
   if (/[\\/]node_modules[\\/]/.test(id)) {
     const matchItem = vendorLibs.find((item) => {
       const reg = new RegExp(
         `[\\/]node_modules[\\/]_?(${item.match.join('|')})(.*)`,
         'ig',
-      );
-      return reg.test(id);
-    });
-    return matchItem ? matchItem.output : null;
+      )
+      return reg.test(id)
+    })
+    return matchItem ? matchItem.output : null
   }
-};
+}
 export default defineConfig(({ command }) => {
-  rmSync('dist-electron', { recursive: true, force: true });
+  rmSync('dist-electron', { recursive: true, force: true })
 
-  const isServe = command === 'serve';
-  const isBuild = command === 'build';
-  const sourcemap = isServe || !!process.env.VSCODE_DEBUG;
+  const isServe = command === 'serve'
+  const isBuild = command === 'build'
+  const sourcemap = isServe || !!process.env.VSCODE_DEBUG
   return {
     plugins: [
       vue(),
-      VueSetupExtend(),
+      Icons({ compiler: 'vue3' }),
       AutoImport({
         /* options */
         include: [
@@ -53,6 +55,7 @@ export default defineConfig(({ command }) => {
         imports: [
           'vue',
           '@vueuse/core',
+          '@vueuse/head',
           'pinia',
           'vue-router',
           'vue-i18n',
@@ -65,29 +68,71 @@ export default defineConfig(({ command }) => {
             ],
           },
         ],
-        dirs: ['src/hooks', 'src/stores', 'src/utils'],
+        dirs: ['src/hooks', 'src/composables', 'src/stores', 'src/utils'],
         dts: 'src/typings/auto-import.d.ts',
-        eslintrc: {
-          enabled: true,
-          filepath: './.eslintrc-auto-import.json',
-          globalsPropValue: true,
-        },
+        vueTemplate: true,
       }),
       Components({
         dirs: ['src/components', 'src/layouts'],
-        extensions: ['vue'],
+        extensions: ['vue', 'md'],
         deep: true,
+        include: [/\.vue$/, /\.vue\?vue/, /\.md$/],
         dts: 'src/typings/components.d.ts',
         resolvers: [NaiveUiResolver()],
       }),
-      Icons({ compiler: 'vue3', autoInstall: true }),
       Unocss(),
-      compressPlugin({
-        ext: '.gz',
-        deleteOriginFile: false,
-      }),
       VueI18nPlugin({
+        runtimeOnly: true,
+        compositionOnly: true,
+        fullInstall: true,
         include: resolve(__dirname, './src/i18n/**'),
+      }),
+      Markdown({
+        wrapperClasses: 'prose prose-sm m-auto text-left',
+        headEnabled: true,
+        markdownItSetup(md) {
+          // https://prismjs.com/
+          md.use(Shiki, {
+            theme: {
+              light: 'vitesse-light',
+              dark: 'vitesse-dark',
+            },
+          })
+          md.use(LinkAttributes, {
+            matcher: (link: string) => /^https?:\/\//.test(link),
+            attrs: {
+              target: '_blank',
+              rel: 'noopener',
+            },
+          })
+        },
+      }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg', 'safari-pinned-tab.svg'],
+        manifest: {
+          name: 'vue3-starter',
+          short_name: 'vue3-starter',
+          theme_color: '#ffffff',
+          icons: [
+            {
+              src: '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable',
+            },
+          ],
+        },
       }),
       electron([
         {
@@ -97,9 +142,10 @@ export default defineConfig(({ command }) => {
             if (process.env.VSCODE_DEBUG) {
               console.log(
                 /* For `.vscode/.debug.script.mjs` */ '[startup] Electron App',
-              );
-            } else {
-              options.startup();
+              )
+            }
+            else {
+              options.startup()
             }
           },
           vite: {
@@ -120,7 +166,7 @@ export default defineConfig(({ command }) => {
           onstart(options) {
             // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete,
             // instead of restarting the entire Electron App.
-            options.reload();
+            options.reload()
           },
           vite: {
             build: {
@@ -151,7 +197,7 @@ export default defineConfig(({ command }) => {
         '/api': {
           target: 'https://mock.apifox.cn/m1/476417-0-default',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
+          rewrite: path => path.replace(/^\/api/, ''),
         },
       },
     },
@@ -174,7 +220,6 @@ export default defineConfig(({ command }) => {
           chunkFileNames: 'static/js/[name]-[hash].js',
           entryFileNames: 'static/js/[name]-[hash].js',
           assetFileNames: 'static/[ext]/[name]-[hash].[ext]',
-          manualChunks: configManualChunk,
         },
       },
     },
@@ -184,5 +229,5 @@ export default defineConfig(({ command }) => {
         'vue-i18n': 'vue-i18n/dist/vue-i18n.cjs.js',
       },
     },
-  };
-});
+  }
+})
