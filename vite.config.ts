@@ -14,7 +14,6 @@ import LinkAttributes from 'markdown-it-link-attributes'
 import Shiki from 'markdown-it-shiki'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
-import pkg from './package.json'
 // https://vitejs.dev/config/
 const vendorLibs: { match: string[]; output: string }[] = [
   {
@@ -154,9 +153,10 @@ export default defineConfig(({ command }) => {
               minify: isBuild,
               outDir: 'dist-electron/main',
               rollupOptions: {
-                external: Object.keys(
-                  'dependencies' in pkg ? pkg.dependencies : {},
-                ),
+                external: ['@electron-toolkit/utils'],
+                // external: Object.keys(
+                //   'dependencies' in pkg ? pkg.dependencies : {},
+                // ),
               },
             },
           },
@@ -174,9 +174,10 @@ export default defineConfig(({ command }) => {
               minify: isBuild,
               outDir: 'dist-electron/preload',
               rollupOptions: {
-                external: Object.keys(
-                  'dependencies' in pkg ? pkg.dependencies : {},
-                ),
+                external: ['@electron-toolkit/preload'],
+                // external: Object.keys(
+                //   'dependencies' in pkg ? pkg.dependencies : {},
+                // ),
               },
             },
           },
