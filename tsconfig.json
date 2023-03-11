@@ -27,23 +27,23 @@
     "types": [
       "unplugin-icons/types/vue",
       "naive-ui/volar",
-      "vitest/globals"
+      "vitest/globals",
+      "vite-plugin-svg-icons/client",
+      "vite-plugin-vue-layouts/client"
     ]
   },
   "include": [
+    "vite.config.ts",
+    "package.json",
+    "electron/**/*.ts",
+    "electron/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "electron/preload/*.d.ts"
   ],
   "exclude": [
     "node_modules",
     "dist"
   ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
 }

@@ -1,4 +1,4 @@
-import { resolve } from 'path'
+import { resolve } from 'node:path'
 import { rmSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -14,6 +14,11 @@ import LinkAttributes from 'markdown-it-link-attributes'
 import Shiki from 'markdown-it-shiki'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import DefineOptions from 'unplugin-vue-define-options/vite'
+import Pages from 'vite-plugin-pages'
+import Layouts from 'vite-plugin-vue-layouts'
+
 // https://vitejs.dev/config/
 const vendorLibs: { match: string[]; output: string }[] = [
   {
@@ -42,8 +47,20 @@ export default defineConfig(({ command }) => {
   const sourcemap = isServe || !!process.env.VSCODE_DEBUG
   return {
     plugins: [
+      // https://github.com/hannoeru/vite-plugin-pages
+      Pages({
+        extensions: ['vue', 'md'],
+      }),
+      // https://github.com/JohnCampionJr/vite-plugin-vue-layouts
+      Layouts(),
+      DefineOptions(),
+      createSvgIconsPlugin({
+        iconDirs: [resolve(process.cwd(), 'src/assets/icons')],
+        symbolId: 'icon-[dir]-[name]',
+      }),
       vue(),
       Icons({ compiler: 'vue3' }),
+      // https://github.com/antfu/unplugin-auto-import
       AutoImport({
         /* options */
         include: [
@@ -71,6 +88,7 @@ export default defineConfig(({ command }) => {
         dts: 'src/typings/auto-import.d.ts',
         vueTemplate: true,
       }),
+      // https://github.com/antfu/unplugin-vue-components
       Components({
         dirs: ['src/components', 'src/layouts'],
         extensions: ['vue', 'md'],
@@ -79,6 +97,8 @@ export default defineConfig(({ command }) => {
         dts: 'src/typings/components.d.ts',
         resolvers: [NaiveUiResolver()],
       }),
+      // https://github.com/antfu/unocss
+      // see unocss.config.ts for config
       Unocss(),
       VueI18nPlugin({
         runtimeOnly: true,
@@ -86,6 +106,7 @@ export default defineConfig(({ command }) => {
         fullInstall: true,
         include: resolve(__dirname, './src/i18n/**'),
       }),
+      // https://github.com/antfu/vite-plugin-vue-markdown
       Markdown({
         wrapperClasses: 'prose prose-sm m-auto text-left',
         headEnabled: true,
@@ -106,6 +127,7 @@ export default defineConfig(({ command }) => {
           })
         },
       }),
+      // https://github.com/antfu/vite-plugin-pwa
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'safari-pinned-tab.svg'],

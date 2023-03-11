@@ -13,7 +13,7 @@ const { useDarkMode, naiveThemeOverrides, naiveLocale, naiveDateLocale }
     <div wfull hfull flex-center bg="white dark:gray-900">
       <header-bar />
       <div max-w-xl hfull flex-center select-none flex="col">
-        <slot />
+        <router-entry />
         <default-menu />
       </div>
     </div>
